@@ -11,10 +11,13 @@ const { pseudonymizeUserId } = require('../utils/idGenerator');
  */
 router.post('/', async (req, res) => {
   try {
-    const { original_url, user_id, platform } = req.body;
+    const { original_url, user_id, base_url, platform } = req.body;
+
+    // Accept either parameter name
+    const urlToProcess = original_url || base_url;
 
     // Validate required fields
-    if (!original_url) {
+    if (!urlToProcess) {
       return res.status(400).json({ 
         error: 'original_url is required' 
       });
@@ -27,7 +30,7 @@ router.post('/', async (req, res) => {
     }
 
     // Validate URL format
-    if (!isValidUrl(original_url)) {
+    if (!isValidUrl(urlToProcess)) {
       return res.status(400).json({ 
         error: 'Invalid URL format' 
       });
@@ -35,9 +38,9 @@ router.post('/', async (req, res) => {
 
     // Get active UTM config from Supabase
     const { data: utmConfig, error: configError } = await supabase
-      .from('utm_config')
+      .from('utm_configs')
       .select('*')
-      .eq('is_active', true)
+      .eq('is_default', true)
       .single();
 
     if (configError || !utmConfig) {
@@ -47,7 +50,7 @@ router.post('/', async (req, res) => {
     }
 
     // Build tracking URL
-    const { modified_url, tracking_id } = buildTrackingUrl(original_url, utmConfig);
+    const { modified_url, tracking_id } = buildTrackingUrl(urlToProcess, utmConfig);
 
     // Pseudonymize user_id if enabled in env
     const shouldPseudonymize = process.env.PSEUDONYMIZE_USERS === 'true';
@@ -60,7 +63,7 @@ router.post('/', async (req, res) => {
       .from('link_clicks')
       .insert({
         user_id: storedUserId,
-        original_url,
+        original_url: urlToProcess,
         modified_url,
         tracking_id,
         platform: platform || 'unknown'

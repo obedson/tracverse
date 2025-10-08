@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { supabase } = require('../config/supabase');
+const mlmService = require('../services/mlmService');
 
 /**
  * GET /api/clicks
@@ -77,3 +78,51 @@ router.get('/', async (req, res) => {
 });
 
 module.exports = router;
+/**
+ * POST /api/clicks/track
+ * Track a click and process MLM commissions
+ */
+router.post('/track', async (req, res) => {
+  try {
+    const { user_id, original_url, modified_url, tracking_id, platform = 'unknown' } = req.body;
+
+    if (!user_id || !original_url) {
+      return res.status(400).json({ error: 'user_id and original_url are required' });
+    }
+
+    // Record the click
+    const { data: click, error: clickError } = await supabase
+      .from('link_clicks')
+      .insert({
+        user_id,
+        original_url,
+        modified_url: modified_url || original_url,
+        tracking_id: tracking_id || `track_${Date.now()}`,
+        platform
+      })
+      .select()
+      .single();
+
+    if (clickError) throw clickError;
+
+    // Process MLM commissions (1 point per click)
+    const points = 1;
+    const commissionResult = await mlmService.processTaskCompletion(user_id, points);
+
+    res.json({
+      message: 'Click tracked successfully',
+      click,
+      mlm: {
+        points_earned: points,
+        commissions_created: commissionResult.commissions.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Click tracking error:', error);
+    res.status(500).json({ 
+      error: 'Failed to track click',
+      message: error.message 
+    });
+  }
+});

@@ -1,0 +1,44 @@
+ DATABASE SETUP
+> ## ✅ PROPER DATABASE SETUP APPROACH
+
+I've created the right solution:
+
+### **1. Database State Check**
+sql
+-- Run: check_database_state.sql
+-- Shows current tables, users, and data volume
+
+
+### **2. Comprehensive Test Data**
+sql
+-- Run: create_test_data.sql
+-- Creates 6 test users with MLM hierarchy
+-- 10 realistic commissions ($625 total)
+-- 3 payout records
+-- Proper sponsor relationships
+
+
+### **3. Automated Setup Script**
+bash
+cd /mnt/f/tracverse/server
+node setup_test_database.js
+
+
+### **Test Users Created:**
+• **sponsor@tracverse.com** (Diamond, $15K earnings)
+• **user1@tracverse.com** (Gold, $4.5K earnings)
+• **user2@tracverse.com** (Silver, $2.4K earnings)
+• **Password**: Test123! for all
+
+### **Real MLM Data:**
+• **Direct commissions**: $230
+• **Override commissions**: $115
+• **Leadership bonuses**: $210
+• **Matching bonuses**: $70
+• **Pending**: $135, Paid: $490
+
+Run the setup script and test with real Supabase data!
+
+This creates a proper MLM testing environment with realistic commission calculations and team hierarchies.
+
+>

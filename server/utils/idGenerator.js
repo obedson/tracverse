@@ -63,3 +63,21 @@ module.exports = {
   uuidToBase62,
   pseudonymizeUserId
 };
+/**
+ * Generate a unique referral code
+ * @returns {string} 8-character alphanumeric referral code
+ */
+function generateReferralCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+module.exports = {
+  generateTrackingId,
+  uuidToBase62,
+  pseudonymizeUserId,
+  generateReferralCode
+};

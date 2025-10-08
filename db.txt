@@ -1,0 +1,2 @@
+ERROR:  23503: insert or update on table "commissions" violates foreign key constraint "commissions_from_user_id_fkey"
+DETAIL:  Key (from_user_id)=(cef7e69c-057d-40e8-9a87-4e4f5d9a56cc) is not present in table "users".
