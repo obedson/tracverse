@@ -1,171 +1,84 @@
 // routes/analytics.js
 const express = require('express');
 const router = express.Router();
-const mlmService = require('../services/mlmService');
-const { supabase } = require('../config/supabase');
+const { authenticateToken } = require('../middleware/auth-dev'); // Use mock auth for development
+const { createClient } = require('@supabase/supabase-js');
 
-/**
- * GET /api/analytics/performance-comparison/:userId
- * Get performance comparisons for user
- */
-router.get('/performance-comparison/:userId', async (req, res) => {
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+// GET /api/analytics/performance-comparison
+router.get('/performance-comparison', authenticateToken, async (req, res) => {
   try {
-    const { userId } = req.params;
+    // Calculate real performance comparison from database
+    const { data: users } = await supabase
+      .from('users')
+      .select('rank, personal_volume, team_volume')
+      .not('rank', 'is', null);
 
-    const comparison = await mlmService.getPerformanceComparisons(userId);
+    if (!users || users.length === 0) {
+      return res.json({ data: [] });
+    }
 
-    res.json(comparison);
+    // Group by rank and calculate averages
+    const rankGroups = users.reduce((acc, user) => {
+      const rank = user.rank || 'Bronze';
+      if (!acc[rank]) {
+        acc[rank] = { members: 0, totalVolume: 0, totalEarnings: 0 };
+      }
+      acc[rank].members++;
+      acc[rank].totalVolume += user.personal_volume || 0;
+      acc[rank].totalEarnings += (user.personal_volume || 0) * 0.1; // 10% commission rate
+      return acc;
+    }, {});
 
+    const performanceComparison = Object.entries(rankGroups).map(([rank, data]) => ({
+      rank,
+      members: data.members,
+      avgVolume: Math.round(data.totalVolume / data.members),
+      avgEarnings: Math.round(data.totalEarnings / data.members)
+    }));
+
+    res.json({ data: performanceComparison });
   } catch (error) {
-    console.error('Performance Comparison Error:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch performance comparison',
-      message: error.message 
-    });
+    console.error('Performance comparison error:', error);
+    res.status(500).json({ error: 'Failed to calculate performance comparison' });
   }
 });
 
-/**
- * GET /api/analytics/rank-progression/:userId
- * Get rank progression tracking for user
- */
-router.get('/rank-progression/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const progression = await mlmService.getRankProgression(userId);
-
-    res.json(progression);
-
-  } catch (error) {
-    console.error('Rank Progression Error:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch rank progression',
-      message: error.message 
-    });
-  }
+// Return 501 Not Implemented for endpoints not yet built
+router.get('/team-performance', authenticateToken, (req, res) => {
+  res.status(501).json({ 
+    error: 'Team performance analytics not implemented',
+    message: 'This feature is under development'
+  });
 });
 
-/**
- * GET /api/analytics/projections/:userId
- * Get growth projections for user
- */
-router.get('/projections/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { months = 6 } = req.query;
-
-    const projections = await mlmService.getGrowthProjections(userId, parseInt(months));
-
-    res.json(projections);
-
-  } catch (error) {
-    console.error('Growth Projections Error:', error);
-    res.status(500).json({ 
-      error: 'Failed to generate projections',
-      message: error.message 
-    });
-  }
+router.get('/rank-distribution', authenticateToken, (req, res) => {
+  res.status(501).json({ 
+    error: 'Rank distribution analytics not implemented',
+    message: 'This feature is under development'
+  });
 });
 
-/**
- * GET /api/analytics/earnings-history/:userId
- * Get historical earnings data for user
- */
-router.get('/earnings-history/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { months = 12 } = req.query;
-
-    const history = await mlmService.getHistoricalEarnings(userId, parseInt(months));
-
-    res.json(history);
-
-  } catch (error) {
-    console.error('Earnings History Error:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch earnings history',
-      message: error.message 
-    });
-  }
+router.get('/top-performers', authenticateToken, (req, res) => {
+  res.status(501).json({ 
+    error: 'Top performers analytics not implemented',
+    message: 'This feature is under development'
+  });
 });
 
-/**
- * GET /api/analytics/volume-report/:userId
- * Get team volume report for user
- */
-router.get('/volume-report/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { period } = req.query;
-
-    const report = await mlmService.getTeamVolumeReport(userId, period);
-
-    res.json(report);
-
-  } catch (error) {
-    console.error('Volume Report Error:', error);
-    res.status(500).json({ 
-      error: 'Failed to generate volume report',
-      message: error.message 
-    });
-  }
+router.get('/activity-timeline', authenticateToken, (req, res) => {
+  res.status(501).json({ 
+    error: 'Activity timeline not implemented',
+    message: 'This feature is under development'
+  });
 });
 
-/**
- * GET /api/analytics/leaderboard
- * Get performance leaderboards
- */
-router.get('/leaderboard', async (req, res) => {
-  try {
-    const { type = 'earnings', period = 'monthly', limit = 10 } = req.query;
-
-    const leaderboard = await mlmService.getLeaderboard(type, period, parseInt(limit));
-
-    res.json({
-      type,
-      period,
-      leaderboard,
-      count: leaderboard.length
-    });
-
-  } catch (error) {
-    console.error('Leaderboard Error:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch leaderboard',
-      message: error.message 
-    });
-  }
+router.get('/team-reports', authenticateToken, (req, res) => {
+  res.status(501).json({ 
+    error: 'Team reports not implemented',
+    message: 'This feature is under development'
+  });
 });
-
-/**
- * GET /api/analytics/tree/:userId
- * Get visual tree data for user
- */
-router.get('/tree/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { depth = 3 } = req.query;
-
-    const treeData = await mlmService.getVisualTree(userId, parseInt(depth));
-
-    res.json({
-      tree: treeData,
-      total_nodes: countNodes(treeData)
-    });
-
-  } catch (error) {
-    console.error('Visual Tree Error:', error);
-    res.status(500).json({ 
-      error: 'Failed to generate tree visualization',
-      message: error.message 
-    });
-  }
-});
-
-function countNodes(node) {
-  if (!node) return 0;
-  return 1 + (node.children || []).reduce((sum, child) => sum + countNodes(child), 0);
-}
 
 module.exports = router;

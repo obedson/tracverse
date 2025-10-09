@@ -1,2 +1,52 @@
-ERROR:  23503: insert or update on table "commissions" violates foreign key constraint "commissions_from_user_id_fkey"
-DETAIL:  Key (from_user_id)=(cef7e69c-057d-40e8-9a87-4e4f5d9a56cc) is not present in table "users".
+[
+  {
+    "routine_name": "getpgusername",
+    "routine_type": "FUNCTION",
+    "routine_definition": null
+  },
+  {
+    "routine_name": "current_user",
+    "routine_type": "FUNCTION",
+    "routine_definition": null
+  },
+  {
+    "routine_name": "session_user",
+    "routine_type": "FUNCTION",
+    "routine_definition": null
+  },
+  {
+    "routine_name": "system_user",
+    "routine_type": "FUNCTION",
+    "routine_definition": null
+  },
+  {
+    "routine_name": "get_auth",
+    "routine_type": "FUNCTION",
+    "routine_definition": null
+  },
+  {
+    "routine_name": "pg_get_userbyid",
+    "routine_type": "FUNCTION",
+    "routine_definition": null
+  },
+  {
+    "routine_name": "pg_stat_get_backend_userid",
+    "routine_type": "FUNCTION",
+    "routine_definition": null
+  },
+  {
+    "routine_name": "binary_upgrade_set_next_pg_authid_oid",
+    "routine_type": "FUNCTION",
+    "routine_definition": null
+  },
+  {
+    "routine_name": "create_custom_user",
+    "routine_type": "FUNCTION",
+    "routine_definition": "\r\nBEGIN\r\n  INSERT INTO public.users (\r\n    user_id, \r\n    email, \r\n    referral_code, \r\n    rank, \r\n    personal_volume, \r\n    team_volume, \r\n    total_earnings, \r\n    active_status\r\n  ) VALUES (\r\n    NEW.id,\r\n    NEW.email,\r\n    'REF' || UPPER(SUBSTRING(MD5(RANDOM()::TEXT), 1, 6)),\r\n    'Bronze',\r\n    0,\r\n    0,\r\n    0,\r\n    true\r\n  );\r\n  RETURN NEW;\r\nEND;\r\n"
+  },
+  {
+    "routine_name": "create_custom_user_with_referral",
+    "routine_type": "FUNCTION",
+    "routine_definition": "\r\nDECLARE\r\n    referring_user_id UUID;\r\n    new_referral_code VARCHAR(10);\r\nBEGIN\r\n    -- Generate unique referral code\r\n    LOOP\r\n        new_referral_code := 'REF' || UPPER(SUBSTRING(MD5(RANDOM()::TEXT), 1, 7));\r\n        EXIT WHEN NOT EXISTS(SELECT 1 FROM users WHERE referral_code = new_referral_code);\r\n    END LOOP;\r\n    \r\n    -- Find referring user if referral code provided\r\n    IF NEW.raw_user_meta_data->>'referral_code' IS NOT NULL THEN\r\n        SELECT id INTO referring_user_id \r\n        FROM users \r\n        WHERE referral_code = NEW.raw_user_meta_data->>'referral_code';\r\n        \r\n        -- Update referral analytics\r\n        UPDATE referral_analytics \r\n        SET converted = TRUE, \r\n            converted_user_id = NEW.id,\r\n            converted_at = NOW()\r\n        WHERE referral_code = NEW.raw_user_meta_data->>'referral_code'\r\n        AND converted = FALSE;\r\n    END IF;\r\n    \r\n    -- Create custom user record\r\n    INSERT INTO public.users (\r\n        user_id, email, referral_code, sponsor_id, \r\n        referred_by_code, referral_source, conversion_date,\r\n        rank, personal_volume, team_volume, total_earnings, active_status\r\n    ) VALUES (\r\n        NEW.id, NEW.email, new_referral_code, referring_user_id,\r\n        NEW.raw_user_meta_data->>'referral_code',\r\n        NEW.raw_user_meta_data->>'referral_source',\r\n        CASE WHEN referring_user_id IS NOT NULL THEN NOW() ELSE NULL END,\r\n        'Bronze', 0, 0, 0, true\r\n    );\r\n    \r\n    RETURN NEW;\r\nEND;\r\n"
+  }
+]

@@ -8,7 +8,7 @@ class ApiClient {
   constructor() {
     this.client = axios.create({
       baseURL: API_BASE_URL,
-      timeout: 10000,
+      timeout: 30000, // Increased timeout for slow connections
       headers: {
         'Content-Type': 'application/json',
       },
@@ -54,10 +54,23 @@ class ApiClient {
     return response.data;
   }
 
+  // Migration endpoints
+  async migrateAllUsers() {
+    const response = await this.client.post('/auth-migration/migrate-all-users');
+    return response.data;
+  }
+
   // User endpoints
   async getProfile() {
     const response = await this.client.get('/users/profile');
-    return response.data;
+    // Handle both direct data and wrapped response
+    const data = response.data;
+    if (data.success && data.data) {
+      // Backend returns {success: true, data: {...}}
+      return data.data;
+    }
+    // Handle array response from backend
+    return Array.isArray(data) ? data[0] : data;
   }
 
   async getDashboard() {
@@ -74,6 +87,72 @@ class ApiClient {
   // Team endpoints
   async getReferrals() {
     const response = await this.client.get('/referrals');
+    return response.data;
+  }
+
+  // Team Management APIs
+  async getTeamTree() {
+    const response = await this.client.get('/referrals');
+    return response.data;
+  }
+
+  async getTeamStats() {
+    const response = await this.client.get('/referrals/stats');
+    return response.data;
+  }
+
+  async getTeamPerformance() {
+    const response = await this.client.get('/analytics/team-performance');
+    return response.data;
+  }
+
+  async getRankDistribution() {
+    const response = await this.client.get('/analytics/rank-distribution');
+    return response.data;
+  }
+
+  async getTopPerformers() {
+    const response = await this.client.get('/analytics/top-performers');
+    return response.data;
+  }
+
+  async getActivityTimeline() {
+    const response = await this.client.get('/analytics/activity-timeline');
+    return response.data;
+  }
+
+  async getTeamReports() {
+    const response = await this.client.get('/analytics/team-reports');
+    return response.data;
+  }
+
+  async getPerformanceComparison() {
+    const response = await this.client.get('/analytics/performance-comparison');
+    return response.data;
+  }
+
+  // Referral Dashboard endpoints (NEW)
+  async getReferralDashboard(referralCode: string) {
+    const response = await this.client.get(`/referral-dashboard/${referralCode}`);
+    return response.data;
+  }
+
+  async getReferralLiveStats(referralCode: string) {
+    const response = await this.client.get(`/referral-dashboard/${referralCode}/live-stats`);
+    return response.data;
+  }
+
+  // QR Code endpoints (NEW)
+  async generateQRCode(referralCode: string, campaign?: string) {
+    const response = await this.client.post('/qr-codes/generate', {
+      referral_code: referralCode,
+      campaign: campaign || 'dashboard'
+    });
+    return response.data;
+  }
+
+  async getQRCode(referralCode: string) {
+    const response = await this.client.get(`/qr-codes/${referralCode}`);
     return response.data;
   }
 

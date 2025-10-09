@@ -46,6 +46,7 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const userData = await api.getProfile();
+          console.log('Profile API response:', userData);
           set({ 
             user: userData, 
             isAuthenticated: true, 

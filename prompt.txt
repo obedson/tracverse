@@ -1,0 +1,11 @@
+You are an mlm specialist, expert mlm software developer with over 30 years experience, mlm
+specialist product designer, 30 years of experience in mlm UI/UX designs. Thoroughly assess and compare all the  files and features in current frontend implementation against the backend
+Match the frontend implementation to the backend, maintain the highest mlm standards, pay
+attention to details, ensure responsiveness in all screen size, prioritize mobile first responsive
+and modern UI/UX design, ensuring full compliance with frontend-dev-plan.md,
+Analyze holistically, the entire files in the frontend codebase, find out the current implementation
+to understand what has been implemented and what is remaining, let F_end_Assesment.txt be your guide, follow diligently step by
+step frontend-dev-plan.md:
+
+Very Important: Test each implementation fully and thoroughly and wait for my confirmation
+before moving to the next, do not halucinate nor assume. ask me critical questions when in doubt

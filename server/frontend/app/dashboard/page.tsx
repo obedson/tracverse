@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '../components/layout/Sidebar';
 import MetricsCard from '../components/dashboard/MetricsCard';
+import ReferralCodeCard from '../components/dashboard/ReferralCodeCard';
+import QRCodeSection from '../components/dashboard/QRCodeSection';
+import NotificationCenter from '../components/dashboard/NotificationCenter';
+import RealTimeEarnings from '../components/dashboard/RealTimeEarnings';
 import ProtectedRoute from '../../src/components/auth/ProtectedRoute';
 import { useAuthStore } from '../../src/stores/authStore';
 import api from '../../src/lib/api';
@@ -20,6 +24,11 @@ interface DashboardData {
   teamSize: number;
   monthlyVolume: number;
   pendingCommissions: number;
+  referralStats?: {
+    total_clicks: number;
+    conversions: number;
+    conversion_rate: number;
+  };
   recentActivity: Array<{
     type: string;
     message: string;
@@ -31,6 +40,7 @@ export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showEarningsNotification, setShowEarningsNotification] = useState(false);
   
   const { user, logout } = useAuthStore();
   const router = useRouter();
@@ -41,10 +51,19 @@ export default function DashboardPage() {
         setIsLoading(true);
         
         // Load dashboard data from backend
-        const [commissionsResponse, referralsResponse] = await Promise.all([
+        const [commissionsResponse, referralsResponse, referralStatsResponse] = await Promise.all([
           api.getCommissions(),
-          api.getReferrals()
+          api.getReferrals(),
+          // Get referral stats if user has referral code
+          user?.referral_code ? api.getReferralLiveStats(user.referral_code).catch(() => null) : Promise.resolve(null)
         ]);
+
+        console.log('Dashboard data loaded:', {
+          user,
+          commissionsResponse,
+          referralsResponse,
+          referralStatsResponse
+        });
 
         // Handle empty responses
         const commissions = Array.isArray(commissionsResponse) ? commissionsResponse : [];
@@ -65,6 +84,11 @@ export default function DashboardPage() {
           teamSize: referrals.length || 0,
           monthlyVolume: 0, // Will be calculated from actual data later
           pendingCommissions,
+          referralStats: referralStatsResponse ? {
+            total_clicks: referralStatsResponse.all_time?.clicks || 0,
+            conversions: referralStatsResponse.all_time?.conversions || 0,
+            conversion_rate: parseFloat(referralStatsResponse.all_time?.conversion_rate || '0')
+          } : undefined,
           recentActivity: [
             {
               type: 'team',
@@ -102,6 +126,18 @@ export default function DashboardPage() {
     router.push('/login');
   };
 
+  const handleEarningsUpdate = (update: any) => {
+    // Update dashboard data with new earnings
+    setDashboardData(prev => prev ? {
+      ...prev,
+      totalEarnings: prev.totalEarnings + update.amount
+    } : null);
+    
+    // Show notification
+    setShowEarningsNotification(true);
+    setTimeout(() => setShowEarningsNotification(false), 3000);
+  };
+
   if (error) {
     return (
       <ProtectedRoute>
@@ -123,10 +159,7 @@ export default function DashboardPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50 flex pb-16 lg:pb-0">
-        {/* Desktop Sidebar */}
-        <div className="hidden lg:block">
-          <Sidebar />
-        </div>
+        <Sidebar />
 
         {/* Main content */}
         <div className="flex-1 lg:ml-64">
@@ -137,27 +170,33 @@ export default function DashboardPage() {
                 <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Dashboard</h1>
                 <p className="text-sm lg:text-base text-gray-600">Welcome back, {user?.email}</p>
               </div>
-              <button
-                onClick={handleLogout}
-                className="px-3 py-2 lg:px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm min-h-[44px]"
-              >
-                Logout
-              </button>
+              <div className="flex items-center gap-2">
+                <NotificationCenter />
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-2 lg:px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm min-h-[44px]"
+                >
+                  Logout
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Content */}
           <div className="p-4 lg:p-8">
-            {/* Metrics Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
-              <MetricsCard
-                title="Total Earnings"
-                value={`$${dashboardData?.totalEarnings.toFixed(2) || '0.00'}`}
-                change="+12.5% from last month"
-                changeType="positive"
-                icon={CurrencyDollarIcon}
+            {/* Metrics Grid - Final responsive breakpoints */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
+              {/* Referral Code Card - Always takes full width on mobile, 1 card on tablet/desktop */}
+              <ReferralCodeCard
+                referralCode={user?.referral_code || 'No Code'}
+                totalClicks={dashboardData?.referralStats?.total_clicks || 0}
+                conversions={dashboardData?.referralStats?.conversions || 0}
                 loading={isLoading}
               />
+              
+              {/* Real-time Earnings Card */}
+              <RealTimeEarnings onEarningsUpdate={handleEarningsUpdate} />
+              
               <MetricsCard
                 title="Current Rank"
                 value={dashboardData?.currentRank || 'Loading...'}
@@ -180,6 +219,14 @@ export default function DashboardPage() {
                 change="Available for payout"
                 changeType="positive"
                 icon={ChartBarIcon}
+                loading={isLoading}
+              />
+            </div>
+
+            {/* QR Code Section - Below metrics, above quick actions */}
+            <div className="mb-6 lg:mb-8">
+              <QRCodeSection 
+                referralCode={user?.referral_code || 'No Code'}
                 loading={isLoading}
               />
             </div>
@@ -246,6 +293,16 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Earnings Update Notification */}
+        {showEarningsNotification && (
+          <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce">
+            <div className="flex items-center gap-2">
+              <CurrencyDollarIcon className="h-5 w-5" />
+              <span className="font-medium">New earnings received!</span>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   );

@@ -50,6 +50,10 @@ app.get('/health', (req, res) => {
 app.use('/api/generate-url', require('./routes/generate-compliant'));
 app.use('/api/clicks', clicksRoute);
 app.use('/api/utm-config', utmConfigRoute);
+app.use('/api/referral-dashboard', require('./routes/referral-dashboard'));
+app.use('/api/utm-analytics', require('./routes/utm-analytics'));
+app.use('/api/qr-codes', require('./routes/qr-codes'));
+app.use('/api/referral-tracking', require('./routes/referral-tracking'));
 app.use('/api/referrals', referralsRoute);
 app.use('/api/commissions', commissionsRoute);
 // Mock routes for testing when Supabase is unavailable
@@ -61,6 +65,7 @@ app.use('/api/qualifications', qualificationsRoute);
 app.use('/api/marketing', marketingRoute);
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/auth-fixed', require('./routes/auth-fixed'));
+app.use('/api/auth-migration', require('./routes/auth-migration'));
 app.use('/api/auth-mock', require('./routes/auth-mock')); // Mock auth for testing
 app.use('/api/users', require('./routes/users'));
 app.use('/api/settings', require('./routes/settings'));

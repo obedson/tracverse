@@ -10,6 +10,7 @@ import {
   CurrencyDollarIcon,
   MegaphoneIcon,
   Cog6ToothIcon,
+  ShieldCheckIcon,
   Bars3Icon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
@@ -21,6 +22,7 @@ const navigation = [
   { name: 'Earnings', href: '/earnings', icon: CurrencyDollarIcon },
   { name: 'Marketing', href: '/marketing', icon: MegaphoneIcon },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+  { name: 'Admin', href: '/admin', icon: ShieldCheckIcon },
 ];
 
 export default function Sidebar() {
@@ -100,13 +102,6 @@ export default function Sidebar() {
             })}
           </div>
         </nav>
-
-        {/* User info at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-          <div className="text-xs text-gray-500 text-center">
-            Tracverse MLM Platform
-          </div>
-        </div>
       </div>
     </>
   );

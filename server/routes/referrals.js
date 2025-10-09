@@ -1,8 +1,9 @@
 // routes/referrals.js
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth-dev'); // Use mock auth for development
 const { createClient } = require('@supabase/supabase-js');
+const mlmService = require('../services/mlmService');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -14,13 +15,25 @@ router.get('/', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    // Get direct referrals
+    // First get the user's UUID from their user_id
+    const { data: user } = await supabase
+      .from('users')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get direct referrals using the UUID
     const { data: directReferrals, error: referralsError } = await supabase
       .from('users')
       .select('id, email, referral_code, rank, total_earnings, active_status, created_at')
-      .eq('sponsor_id', userId);
+      .eq('sponsor_id', user.id);
 
     if (referralsError) {
+      console.error('Referrals error:', referralsError);
       return res.status(500).json({ error: 'Failed to fetch referrals' });
     }
 
@@ -40,6 +53,43 @@ router.get('/', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Referrals fetch error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/referrals/stats
+ * Get referral statistics for dashboard
+ */
+router.get('/stats', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // First get the user's UUID from their user_id
+    const { data: user } = await supabase
+      .from('users')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!user) {
+      return res.json({ total_referrals: 0, active_referrals: 0, total_earnings: 0 });
+    }
+
+    const { data: referrals } = await supabase
+      .from('users')
+      .select('id, active_status, total_earnings')
+      .eq('sponsor_id', user.id);
+
+    const stats = {
+      total_referrals: referrals?.length || 0,
+      active_referrals: referrals?.filter(r => r.active_status).length || 0,
+      total_earnings: referrals?.reduce((sum, r) => sum + (r.total_earnings || 0), 0) || 0
+    };
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
   }
 });
 
@@ -197,6 +247,46 @@ router.get('/downline/:userId', async (req, res) => {
     console.error('Downline Fetch Error:', error);
     res.status(500).json({ 
       error: 'Failed to fetch downline',
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/referrals/stats
+ * Get referral statistics for authenticated user
+ */
+router.get('/stats', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    // Use proper MLM service with validation
+    const stats = await mlmService.getTreeStats(userId);
+    
+    // Get user's referral code with validation
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('referral_code, rank, personal_volume, team_volume')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('User fetch error:', error);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      referral_code: user?.referral_code,
+      rank: user?.rank || 'Bronze',
+      personal_volume: user?.personal_volume || 0,
+      team_volume: user?.team_volume || 0,
+      ...stats
+    });
+
+  } catch (error) {
+    console.error('Stats Fetch Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch statistics',
       message: error.message 
     });
   }

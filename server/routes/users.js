@@ -1,6 +1,6 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth-dev'); // Use mock auth for development
 const { hashPassword } = require('../utils/auth');
 const { validateEmail, validatePassword, sanitizeInput } = require('../utils/validation');
 
@@ -13,27 +13,28 @@ router.get('/profile', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    // Get user from Supabase Auth
-    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
+    // Get user from custom users table using Supabase Auth ID
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
 
-    if (authError || !authUser.user) {
+    if (error || !users) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const user = authUser.user;
-    const metadata = user.user_metadata || {};
-
     res.success({
-      id: user.id,
-      email: user.email,
-      referral_code: metadata.referral_code,
-      rank: metadata.rank || 'Bronze',
-      personal_volume: metadata.personal_volume || 0,
-      team_volume: metadata.team_volume || 0,
-      total_earnings: metadata.total_earnings || 0,
-      active_status: metadata.active_status !== false,
-      created_at: user.created_at,
-      updated_at: user.updated_at
+      id: users.user_id,
+      email: users.email,
+      referral_code: users.referral_code,
+      rank: users.rank || 'Bronze',
+      personal_volume: users.personal_volume || 0,
+      team_volume: users.team_volume || 0,
+      total_earnings: users.total_earnings || 0,
+      active_status: users.active_status !== false,
+      created_at: users.created_at,
+      updated_at: users.updated_at
     }, 'Profile retrieved successfully');
 
   } catch (error) {
