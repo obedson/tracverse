@@ -28,7 +28,12 @@ export const useAuthStore = create<AuthState>()(
       
       setLoading: (isLoading) => set({ isLoading }),
       
-      logout: () => {
+      logout: async () => {
+        try {
+          await api.logout();
+        } catch (error) {
+          console.log('Logout API call failed, clearing local state anyway');
+        }
         localStorage.removeItem('auth_token');
         set({ 
           user: null, 

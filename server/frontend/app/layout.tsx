@@ -20,8 +20,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`}>
-        <div className="min-h-screen bg-gray-50">
+      <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
+        <div className="min-h-screen bg-gray-50 w-full max-w-full overflow-x-hidden">
           {children}
           <BottomNavigation />
         </div>

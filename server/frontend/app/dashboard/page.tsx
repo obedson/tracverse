@@ -8,6 +8,7 @@ import ReferralCodeCard from '../components/dashboard/ReferralCodeCard';
 import QRCodeSection from '../components/dashboard/QRCodeSection';
 import NotificationCenter from '../components/dashboard/NotificationCenter';
 import RealTimeEarnings from '../components/dashboard/RealTimeEarnings';
+import PPWalletCard from '../components/dashboard/PPWalletCard';
 import ProtectedRoute from '../../src/components/auth/ProtectedRoute';
 import { useAuthStore } from '../../src/stores/authStore';
 import api from '../../src/lib/api';
@@ -186,6 +187,9 @@ export default function DashboardPage() {
           <div className="p-4 lg:p-8">
             {/* Metrics Grid - Final responsive breakpoints */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
+              {/* PP Wallet Card - First priority for MLM */}
+              <PPWalletCard loading={isLoading} />
+              
               {/* Referral Code Card - Always takes full width on mobile, 1 card on tablet/desktop */}
               <ReferralCodeCard
                 referralCode={user?.referral_code || 'No Code'}

@@ -2,6 +2,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 
 // Import routes
 const generateRoute = require('./routes/generate');
@@ -24,7 +26,23 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors()); // Enable CORS for all origins
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+}));
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(cookieParser());
 app.use(securityHeaders); // Apply security headers
 app.use(apiLimiter); // Apply rate limiting to all routes
 app.use(formatResponse); // Add response formatting helpers
@@ -56,6 +74,9 @@ app.use('/api/qr-codes', require('./routes/qr-codes'));
 app.use('/api/referral-tracking', require('./routes/referral-tracking'));
 app.use('/api/referrals', referralsRoute);
 app.use('/api/commissions', commissionsRoute);
+app.use('/api/pp-wallet', require('./routes/pp-wallet'));
+app.use('/api/membership-plans', require('./routes/membership-plans'));
+app.use('/api/earnings-cap', require('./routes/earnings-cap'));
 // Mock routes for testing when Supabase is unavailable
 app.use('/api/referrals-mock', require('./routes/referrals-mock'));
 app.use('/api/commissions-mock', require('./routes/commissions-mock'));
@@ -63,10 +84,8 @@ app.use('/api/payouts', payoutsRoute);
 app.use('/api/tasks', tasksRoute);
 app.use('/api/qualifications', qualificationsRoute);
 app.use('/api/marketing', marketingRoute);
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/auth-fixed', require('./routes/auth-fixed'));
-app.use('/api/auth-migration', require('./routes/auth-migration'));
-app.use('/api/auth-mock', require('./routes/auth-mock')); // Mock auth for testing
+// Auth routes - Enterprise only
+app.use('/api/auth-enterprise', require('./routes/auth-enterprise'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/settings', require('./routes/settings'));
 app.use('/api/analytics', require('./routes/analytics'));

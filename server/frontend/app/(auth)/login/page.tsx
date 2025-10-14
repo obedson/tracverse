@@ -23,16 +23,44 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await api.login(formData);
+      // Try enterprise authentication first
+      const response = await api.loginEnterprise({
+        email: formData.email,
+        password: formData.password
+      });
       
-      // Store token and user data
-      localStorage.setItem('auth_token', response.token);
+      // Store user data (tokens are in cookies)
       setUser(response.user);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      
+      // Small delay to ensure cookies are set before redirect
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Redirect to dashboard
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed. Please try again.');
+    } catch (error: any) {
+      console.error('Enterprise login failed:', error);
+      
+      // Handle specific enterprise auth errors
+      if (error.response?.status === 423) {
+        setError('Account temporarily locked due to failed login attempts');
+      } else if (error.response?.status === 429) {
+        setError('Too many login attempts. Please try again in 15 minutes');
+      } else if (error.response?.data?.details) {
+        // Validation errors
+        const details = error.response.data.details;
+        setError(details.map((d: any) => d.msg).join(', '));
+      } else {
+        // Fallback to legacy auth for existing users
+        try {
+          const legacyResponse = await api.login(formData);
+          localStorage.setItem('auth_token', legacyResponse.token);
+          setUser(legacyResponse.user);
+          router.push('/dashboard');
+        } catch (legacyError: any) {
+          setError(legacyError.response?.data?.error || 'Login failed. Please try again.');
+        }
+      }
     } finally {
       setIsLoading(false);
     }

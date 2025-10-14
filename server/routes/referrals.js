@@ -1,7 +1,7 @@
 // routes/referrals.js
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth-dev'); // Use mock auth for development
+const { authenticateToken } = require('../middleware/auth-enterprise');
 const { createClient } = require('@supabase/supabase-js');
 const mlmService = require('../services/mlmService');
 

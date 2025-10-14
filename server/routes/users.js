@@ -1,6 +1,6 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
-const { authenticateToken } = require('../middleware/auth-dev'); // Use mock auth for development
+const { authenticateToken } = require('../middleware/auth-enterprise');
 const { hashPassword } = require('../utils/auth');
 const { validateEmail, validatePassword, sanitizeInput } = require('../utils/validation');
 

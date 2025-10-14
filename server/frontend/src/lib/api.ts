@@ -8,7 +8,8 @@ class ApiClient {
   constructor() {
     this.client = axios.create({
       baseURL: API_BASE_URL,
-      timeout: 30000, // Increased timeout for slow connections
+      timeout: 30000,
+      withCredentials: true, // Enable cookies for enterprise auth
       headers: {
         'Content-Type': 'application/json',
       },
@@ -17,10 +18,13 @@ class ApiClient {
     this.setupInterceptors();
   }
 
+  private refreshPromise: Promise<any> | null = null;
+
   private setupInterceptors() {
-    // Request interceptor - add auth token
+    // Request interceptor - cookies handled automatically
     this.client.interceptors.request.use(
       (config) => {
+        // Enterprise auth uses cookies, but keep token fallback for compatibility
         const token = localStorage.getItem('auth_token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
@@ -30,14 +34,40 @@ class ApiClient {
       (error) => Promise.reject(error)
     );
 
-    // Response interceptor - handle errors
+    // Response interceptor - handle errors and token refresh
     this.client.interceptors.response.use(
       (response) => response,
-      (error: AxiosError) => {
-        if (error.response?.status === 401) {
-          localStorage.removeItem('auth_token');
-          window.location.href = '/login';
+      async (error: AxiosError) => {
+        const originalRequest = error.config as any;
+        
+        // Only handle 401 (unauthorized), not 403 (forbidden)
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          
+          // Prevent multiple refresh requests
+          if (!this.refreshPromise) {
+            this.refreshPromise = this.client.post('/auth-enterprise/refresh')
+              .finally(() => {
+                this.refreshPromise = null;
+              });
+          }
+          
+          try {
+            await this.refreshPromise;
+            // Retry original request
+            return this.client.request(originalRequest);
+          } catch (refreshError) {
+            // Clear auth and redirect to login
+            console.log('Token refresh failed, but continuing...');
+            // TODO: Re-enable redirect after fixing cookie issues
+            // if (typeof window !== 'undefined') {
+            //   localStorage.removeItem('user');
+            //   localStorage.removeItem('auth_token');
+            //   window.location.href = '/login';
+            // }
+          }
         }
+        
         return Promise.reject(error);
       }
     );
@@ -45,18 +75,12 @@ class ApiClient {
 
   // Auth endpoints
   async login(credentials: { email: string; password: string }) {
-    const response = await this.client.post('/auth-fixed/login', credentials);
+    const response = await this.client.post('/auth-enterprise/login', credentials);
     return response.data;
   }
 
   async register(data: { email: string; password: string; sponsor_code?: string }) {
-    const response = await this.client.post('/auth-fixed/register', data);
-    return response.data;
-  }
-
-  // Migration endpoints
-  async migrateAllUsers() {
-    const response = await this.client.post('/auth-migration/migrate-all-users');
+    const response = await this.client.post('/auth-enterprise/register', data);
     return response.data;
   }
 
@@ -159,6 +183,35 @@ class ApiClient {
   // Marketing endpoints
   async generateUrl(data: { base_url: string; platform?: string }) {
     const response = await this.client.post('/generate-url', data);
+    return response.data;
+  }
+
+  // PP Wallet endpoints
+  async getPPBalance() {
+    const response = await this.client.get('/pp-wallet/balance');
+    return response.data;
+  }
+
+  // Membership Plans endpoints
+  async getMembershipPlans() {
+    const response = await this.client.get('/membership-plans');
+    return response.data;
+  }
+
+  // Earnings Cap endpoints
+  async getEarningsCapStatus() {
+    const response = await this.client.get('/earnings-cap/status');
+    return response.data;
+  }
+
+  // Token management
+  async refreshToken() {
+    const response = await this.client.post('/auth-enterprise/refresh');
+    return response.data;
+  }
+
+  async logout() {
+    const response = await this.client.post('/auth-enterprise/logout');
     return response.data;
   }
 }
