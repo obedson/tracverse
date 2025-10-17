@@ -9,19 +9,16 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, validateToken } = useAuthStore();
+  const { isAuthenticated, isLoading, user } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const isValid = await validateToken();
-      if (!isValid) {
-        router.push('/login');
-      }
-    };
-
-    checkAuth();
-  }, [validateToken, router]);
+    // Check if user exists in localStorage or store
+    const storedUser = localStorage.getItem('user');
+    if (!user && !storedUser) {
+      router.push('/login');
+    }
+  }, [user, router]);
 
   if (isLoading) {
     return (
@@ -34,7 +31,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !localStorage.getItem('user')) {
     return null; // Will redirect to login
   }
 

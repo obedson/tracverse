@@ -6,14 +6,16 @@ import {
   UsersIcon,
   CurrencyDollarIcon,
   ShareIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
   UsersIcon as UsersIconSolid,
   CurrencyDollarIcon as CurrencyDollarIconSolid,
   ShareIcon as ShareIconSolid,
-  Cog6ToothIcon as Cog6ToothIconSolid
+  Cog6ToothIcon as Cog6ToothIconSolid,
+  ClipboardDocumentListIcon as ClipboardDocumentListIconSolid
 } from '@heroicons/react/24/solid';
 
 interface NavItem {
@@ -33,32 +35,32 @@ const navItems: NavItem[] = [
     iconSolid: HomeIconSolid
   },
   {
+    id: 'tasks',
+    label: 'Tasks',
+    path: '/tasks',
+    icon: ClipboardDocumentListIcon,
+    iconSolid: ClipboardDocumentListIconSolid
+  },
+  {
+    id: 'wallet',
+    label: 'Wallet',
+    path: '/wallet',
+    icon: CurrencyDollarIcon,
+    iconSolid: CurrencyDollarIconSolid
+  },
+  {
+    id: 'verification',
+    label: 'Verify',
+    path: '/verification',
+    icon: ShareIcon,
+    iconSolid: ShareIconSolid
+  },
+  {
     id: 'team',
     label: 'Team',
     path: '/team',
     icon: UsersIcon,
     iconSolid: UsersIconSolid
-  },
-  {
-    id: 'earnings',
-    label: 'Earnings',
-    path: '/earnings',
-    icon: CurrencyDollarIcon,
-    iconSolid: CurrencyDollarIconSolid
-  },
-  {
-    id: 'marketing',
-    label: 'Marketing',
-    path: '/marketing',
-    icon: ShareIcon,
-    iconSolid: ShareIconSolid
-  },
-  {
-    id: 'settings',
-    label: 'Settings',
-    path: '/settings',
-    icon: Cog6ToothIcon,
-    iconSolid: Cog6ToothIconSolid
   }
 ];
 

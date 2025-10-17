@@ -204,6 +204,12 @@ class ApiClient {
     return response.data;
   }
 
+  // Task endpoints
+  async getTasks(params?: { platform?: string; task_type?: string; sort?: string }) {
+    const response = await this.client.get('/tasks', { params });
+    return response.data;
+  }
+
   // Token management
   async refreshToken() {
     const response = await this.client.post('/auth-enterprise/refresh');
@@ -212,6 +218,12 @@ class ApiClient {
 
   async logout() {
     const response = await this.client.post('/auth-enterprise/logout');
+    return response.data;
+  }
+
+  // Admin endpoints
+  async migrateAllUsers() {
+    const response = await this.client.post('/auth-enterprise/migrate-all');
     return response.data;
   }
 }

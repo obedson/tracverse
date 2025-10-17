@@ -11,6 +11,7 @@ const clicksRoute = require('./routes/clicks');
 const utmConfigRoute = require('./routes/utmConfig');
 const referralsRoute = require('./routes/referrals');
 const commissionsRoute = require('./routes/commissions');
+const adminCommissionPlansRoute = require('./routes/admin-commission-plans');
 const payoutsRoute = require('./routes/payouts');
 const tasksRoute = require('./routes/tasks');
 const qualificationsRoute = require('./routes/qualifications');
@@ -74,6 +75,10 @@ app.use('/api/qr-codes', require('./routes/qr-codes'));
 app.use('/api/referral-tracking', require('./routes/referral-tracking'));
 app.use('/api/referrals', referralsRoute);
 app.use('/api/commissions', commissionsRoute);
+app.use('/api/admin/commission-plans', adminCommissionPlansRoute);
+app.use('/api/verification', require('./routes/verification'));
+app.use('/api/achievements', require('./routes/achievements'));
+app.use('/api/social-proof', require('./routes/social-proof'));
 app.use('/api/pp-wallet', require('./routes/pp-wallet'));
 app.use('/api/membership-plans', require('./routes/membership-plans'));
 app.use('/api/earnings-cap', require('./routes/earnings-cap'));
@@ -92,6 +97,7 @@ app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/compliance', require('./routes/compliance'));
 app.use('/api/ranks', require('./routes/ranks'));
 app.use('/api/payments', require('./routes/payments'));
+app.use('/api/kyc', require('./routes/kyc'));
 
 // Root endpoint
 app.get('/', (req, res) => {

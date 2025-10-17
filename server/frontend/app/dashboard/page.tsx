@@ -9,6 +9,9 @@ import QRCodeSection from '../components/dashboard/QRCodeSection';
 import NotificationCenter from '../components/dashboard/NotificationCenter';
 import RealTimeEarnings from '../components/dashboard/RealTimeEarnings';
 import PPWalletCard from '../components/dashboard/PPWalletCard';
+import CommissionCard from '../../src/components/dashboard/CommissionCard';
+import EarningsCapCard from '../../src/components/dashboard/EarningsCapCard';
+import LiveActivityFeed from '../../src/components/social-proof/LiveActivityFeed';
 import ProtectedRoute from '../../src/components/auth/ProtectedRoute';
 import { useAuthStore } from '../../src/stores/authStore';
 import api from '../../src/lib/api';
@@ -294,6 +297,26 @@ export default function DashboardPage() {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Additional Dashboard Components */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mt-6">
+              <CommissionCard data={{
+                total_earnings: dashboardData?.totalEarnings || 0,
+                pending_earnings: dashboardData?.pendingCommissions || 0,
+                paid_earnings: (dashboardData?.totalEarnings || 0) - (dashboardData?.pendingCommissions || 0),
+                total_commissions: 0
+              }} />
+              <EarningsCapCard 
+                currentEarnings={dashboardData?.totalEarnings || 0}
+                earningsCap={10000}
+                membershipTier={1}
+              />
+            </div>
+
+            {/* Live Activity Feed */}
+            <div className="mt-6">
+              <LiveActivityFeed />
             </div>
           </div>
         </div>

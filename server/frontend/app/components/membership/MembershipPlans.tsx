@@ -6,6 +6,8 @@ import {
   SparklesIcon,
   CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
+import { useAuthStore } from '../../../src/stores/authStore';
+import paymentService from '../../../src/lib/paymentService';
 import api from '../../../src/lib/api';
 
 interface MembershipPlan {
@@ -19,22 +21,55 @@ interface MembershipPlan {
 export default function MembershipPlans() {
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [processingPayment, setProcessingPayment] = useState<number | null>(null);
+  const { user } = useAuthStore();
 
   useEffect(() => {
     loadPlans();
+    paymentService.loadPaystackScript();
   }, []);
 
   const loadPlans = async () => {
     try {
       const response = await api.getMembershipPlans();
-      // Handle different response formats
       const plansData = Array.isArray(response) ? response : (response?.data || []);
       setPlans(plansData);
     } catch (error) {
       console.error('Failed to load membership plans:', error);
-      setPlans([]); // Set empty array on error
+      setPlans([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePurchase = async (plan: MembershipPlan) => {
+    if (!user?.email) {
+      alert('Please log in to purchase a membership plan');
+      return;
+    }
+
+    setProcessingPayment(plan.id);
+    
+    try {
+      await paymentService.initializePayment({
+        email: user.email,
+        amount: plan.price_naira,
+        planName: plan.name,
+        planId: plan.id,
+        ppAllocation: plan.pp_allocation
+      });
+      
+      // Payment successful
+      alert(`Successfully purchased ${plan.name} plan! ${plan.pp_allocation} PP has been added to your wallet.`);
+      
+      // Refresh user data or redirect
+      window.location.href = '/wallet';
+      
+    } catch (error) {
+      console.error('Payment failed:', error);
+      alert('Payment failed. Please try again.');
+    } finally {
+      setProcessingPayment(null);
     }
   };
 
@@ -50,11 +85,11 @@ export default function MembershipPlans() {
   };
 
   const getTierColor = (tierLevel: number) => {
-    if (tierLevel <= 3) return 'from-amber-400 to-amber-600'; // Bronze
-    if (tierLevel <= 6) return 'from-gray-400 to-gray-600'; // Silver  
-    if (tierLevel <= 9) return 'from-yellow-400 to-yellow-600'; // Gold
-    if (tierLevel <= 12) return 'from-blue-400 to-blue-600'; // Platinum
-    return 'from-purple-400 to-purple-600'; // Diamond
+    if (tierLevel <= 3) return 'from-amber-400 to-amber-600';
+    if (tierLevel <= 6) return 'from-gray-400 to-gray-600';
+    if (tierLevel <= 9) return 'from-yellow-400 to-yellow-600';
+    if (tierLevel <= 12) return 'from-blue-400 to-blue-600';
+    return 'from-purple-400 to-purple-600';
   };
 
   if (loading) {
@@ -136,8 +171,19 @@ export default function MembershipPlans() {
             </div>
 
             {/* Purchase Button */}
-            <button className="w-full bg-blue-600 text-white py-2 lg:py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm lg:text-base min-h-[44px]">
-              Select Plan
+            <button 
+              onClick={() => handlePurchase(plan)}
+              disabled={processingPayment === plan.id}
+              className="w-full bg-blue-600 text-white py-2 lg:py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm lg:text-base min-h-[44px]"
+            >
+              {processingPayment === plan.id ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Processing...
+                </div>
+              ) : (
+                'Purchase Plan'
+              )}
             </button>
           </div>
         </div>

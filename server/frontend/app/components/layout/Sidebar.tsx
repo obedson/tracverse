@@ -13,14 +13,20 @@ import {
   ShieldCheckIcon,
   Bars3Icon,
   XMarkIcon,
+  ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Rank & Achievements', href: '/rank', icon: TrophyIcon },
+  { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon },
   { name: 'Team', href: '/team', icon: UsersIcon },
+  { name: 'Wallet', href: '/wallet', icon: CurrencyDollarIcon },
+  { name: 'Verification', href: '/verification', icon: ShieldCheckIcon },
+  { name: 'Achievements', href: '/achievements', icon: TrophyIcon },
+  { name: 'Membership', href: '/membership', icon: TrophyIcon },
   { name: 'Earnings', href: '/earnings', icon: CurrencyDollarIcon },
   { name: 'Marketing', href: '/marketing', icon: MegaphoneIcon },
+  { name: 'KYC', href: '/kyc', icon: ShieldCheckIcon },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
   { name: 'Admin', href: '/admin', icon: ShieldCheckIcon },
 ];

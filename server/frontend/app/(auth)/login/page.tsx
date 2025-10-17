@@ -23,43 +23,29 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Try enterprise authentication first
-      const response = await api.loginEnterprise({
+      const response = await api.login({
         email: formData.email,
         password: formData.password
       });
       
-      // Store user data (tokens are in cookies)
       setUser(response.user);
       localStorage.setItem('user', JSON.stringify(response.user));
       
-      // Small delay to ensure cookies are set before redirect
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Redirect to dashboard
       router.push('/dashboard');
     } catch (error: any) {
-      console.error('Enterprise login failed:', error);
+      console.error('Login failed:', error);
       
-      // Handle specific enterprise auth errors
       if (error.response?.status === 423) {
         setError('Account temporarily locked due to failed login attempts');
       } else if (error.response?.status === 429) {
         setError('Too many login attempts. Please try again in 15 minutes');
       } else if (error.response?.data?.details) {
-        // Validation errors
         const details = error.response.data.details;
         setError(details.map((d: any) => d.msg).join(', '));
       } else {
-        // Fallback to legacy auth for existing users
-        try {
-          const legacyResponse = await api.login(formData);
-          localStorage.setItem('auth_token', legacyResponse.token);
-          setUser(legacyResponse.user);
-          router.push('/dashboard');
-        } catch (legacyError: any) {
-          setError(legacyError.response?.data?.error || 'Login failed. Please try again.');
-        }
+        setError(error.response?.data?.error || error.message || 'Login failed. Please check your credentials.');
       }
     } finally {
       setIsLoading(false);

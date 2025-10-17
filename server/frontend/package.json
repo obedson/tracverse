@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack -p 3000",
-    "build": "next build --turbopack",
+    "dev": "next dev -p 3000",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest"
@@ -13,15 +13,22 @@
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.2.2",
+    "@paystack/inline-js": "^2.22.7",
+    "@radix-ui/react-progress": "^1.1.7",
+    "@radix-ui/react-tabs": "^1.1.13",
     "@tanstack/react-query": "^5.90.2",
     "axios": "^1.12.2",
     "chart.js": "^4.5.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "framer-motion": "^11.18.2",
+    "lucide-react": "^0.263.1",
     "next": "15.5.4",
     "next-auth": "^4.24.11",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "reactflow": "^11.11.4",
+    "tailwind-merge": "^2.6.0",
     "zustand": "^4.5.7"
   },
   "devDependencies": {

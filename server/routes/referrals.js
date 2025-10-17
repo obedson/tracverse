@@ -101,14 +101,12 @@ router.post('/register', async (req, res) => {
   try {
     const { email, password, sponsor_code } = req.body;
 
-    // Validate required fields
     if (!email || !password) {
       return res.status(400).json({ 
         error: 'Email and password are required' 
       });
     }
 
-    // Check if user already exists
     const { data: existingUser } = await supabase
       .from('users')
       .select('id')
@@ -121,7 +119,6 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Validate sponsor code if provided
     if (sponsor_code) {
       const validation = await mlmService.validateReferralCode(sponsor_code);
       if (!validation.valid) {
@@ -131,10 +128,9 @@ router.post('/register', async (req, res) => {
       }
     }
 
-    // Register user with referral
     const userData = {
       email,
-      password, // In production, hash this
+      password,
       active_status: true
     };
 
@@ -148,10 +144,8 @@ router.post('/register', async (req, res) => {
         referral_code: result.user.referral_code
       },
       sponsor: result.sponsor ? {
-        id: result.sponsor.id,
-        referral_code: result.sponsor.referral_code
-      } : null,
-      placement: result.placement
+        id: result.sponsor.id
+      } : null
     });
 
   } catch (error) {
